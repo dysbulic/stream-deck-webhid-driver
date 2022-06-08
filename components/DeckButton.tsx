@@ -1,6 +1,6 @@
 import { Box, Button, ButtonProps, Image, Input } from "@chakra-ui/react"
 import { StreamDeckWeb } from "@elgato-stream-deck/webhid"
-import { FormEvent, MouseEvent, MouseEventHandler, useRef, useState } from "react"
+import { FormEvent, MouseEvent, useRef, useState } from "react"
 import type { Maybe } from "../types"
 
 export const DeckButton: React.FC<
@@ -19,9 +19,13 @@ export const DeckButton: React.FC<
         reader.onload = (
           (evt: ProgressEvent<FileReader>) => {
             const { result } = evt.target ?? {}
-            const url = `data:image/svg+xml;charset=utf8,${encodeURIComponent(result)}`
-            setImage(url)
-            console.info({ url })
+            if(result) {
+              setImage(
+                `data:image/svg+xml;charset=utf8,${
+                  encodeURIComponent(result.toString())
+                }`
+              )
+            }
           }
         )
         reader.readAsText(file, 'UTF-8')
