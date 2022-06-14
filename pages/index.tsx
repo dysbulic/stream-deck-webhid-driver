@@ -46,17 +46,23 @@ const ROWS = 3
 const COLS = 5
 
 const Home: NextPage = () => {
-  const [device, setDevice] = useState<Maybe<StreamDeckWeb>>(null)
+  const [deck, setDeck] = useState<Maybe<StreamDeckWeb>>(null)
+  const [rows, setRows] = useState(ROWS)
+  const [cols, setCols] = useState(COLS)
 
   const load = useCallback(async () => {
     let [device] = await getStreamDecks()
+    console.info({ d1: device })
     if(!device) {
       [device] = await requestStreamDecks()
     }
+    console.info({ d2: device })
     if(!device) {
       console.error('Couldn’t get a Stream Deck')
     } else {
-      setDevice(device)
+      setDeck(device)
+      setRows(device.KEY_ROWS)
+      setCols(device.KEY_COLUMNS)
     }
     console.log({ device })
   }, [])
@@ -64,27 +70,34 @@ const Home: NextPage = () => {
   return (
     <Box>
       <chakra.header>
-        <Heading>Stream Deck Testing</Heading>
+        <Heading textAlign="center">Stream Deck Testing</Heading>
       </chakra.header>
 
       <chakra.main>
         <Flex justify="center">
-          <Button onClick={load}>Connect</Button>
+          {deck ? (
+            <Text my={5}>
+              Connected: {deck.device.device.device.productName}
+            </Text>
+          ) : (
+            <Button onClick={load}>Connect</Button>
+          )}
         </Flex>
-        <SimpleGrid columns={COLS} spacing={1} w="fit-content">
-          {
-            Array.from({ length: ROWS }).map((_, ridx) => {
-              return Array.from({ length: COLS }).map((_, cidx) => {
-                return (
-                  <DeckButton
-                    key={ridx * ROWS + cidx * COLS}
-                    h="30vmin" w="30vmin"
-                    {...{ device }}
-                  />
-                )
-              })
+        <SimpleGrid columns={cols} spacing={1} w="fit-content" m="auto">
+          {Array.from({ length: rows }).map((_, ridx) => (
+            Array.from({ length: cols }).map((_, cidx) => {
+              const idx = ridx * cols + cidx
+              const size = `min(${100 / cols}vw, ${70 / rows}vh)`
+              return (
+                <DeckButton
+                  key={idx}
+                  h={size} w={size}
+                  index={idx}
+                  {...{ deck }}
+                />
+              )
             })
-          }
+          ))}
         </SimpleGrid>
       </chakra.main>
 
