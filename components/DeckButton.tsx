@@ -16,6 +16,7 @@ export const DeckButton: React.FC<
       useState<Maybe<CanvasRenderingContext2D>>(null)
     )
     const [showPicker, setShowPicker] = useState(false)
+    const [loops, setLoops] = useState(0)
     const file = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -32,25 +33,29 @@ export const DeckButton: React.FC<
 
     const running = useRef(false)
     const redraw = useCallback(async () => {
-      if(running.current) return
       if(!deck || !ctx || !size) return
-      running.current = true
 
       ctx.beginPath()
       ctx.rect(0, 0, size, size)
       ctx.fillStyle = fill
       ctx.fill()
 
-      console.info({ image, index })
       if(image) {
         const obj = await new Promise<HTMLImageElement>((resolve) => {
           const img = new Image()
-          img.addEventListener('load', async () => {
-            resolve(img)
-          })
+          img.addEventListener('load', () => resolve(img))
           img.src = image
         })
-        ctx.drawImage(obj, 0, 0, size, size)
+        const aspect = obj.naturalWidth / obj.naturalHeight
+        let x = 0, y = 0, width = size, height = size
+        if(aspect > 1) {
+          height = width / aspect
+          y = (size - height) / 2
+        } else if(aspect < 1) {
+          width = height * aspect
+          x = (size - width) / 2
+        }
+        ctx.drawImage(obj, x, y, width, height)
       }
 
       const id = ctx.getImageData(0, 0, size, size)
@@ -58,13 +63,12 @@ export const DeckButton: React.FC<
         index, Buffer.from(id.data), { format: 'rgba' }
       )
 
-      timeout.current = window.setTimeout(
-        () => requestAnimationFrame(redraw),
-        TIMEOUT,
-      )
-
-      running.current = false
+      setLoops((l) => l + 1)
     }, [deck, ctx, size, fill, index, image])
+
+    useEffect(() => {
+      window.requestAnimationFrame(redraw)
+    }, [loops])
 
     const timeout = useRef<Maybe<number>>(null)
     useEffect(() => {
@@ -80,6 +84,9 @@ export const DeckButton: React.FC<
       evt.preventDefault()
       const { files } = evt.target as HTMLInputElement
       const [file] = Array.from(files ?? [])
+
+      if(!file) return // canceled
+
       let { type } = file
       const { name } = file
       if(name.endsWith('svg')) type = 'image/svg+xml'
@@ -90,27 +97,12 @@ export const DeckButton: React.FC<
           (evt: ProgressEvent<FileReader>) => {
             const { result } = evt.target ?? {}
             if(result) {
-              let str = result
-              if(typeof result !== 'string') {
-                const uint8 = new Uint8Array(result)
-                if(type.endsWith('xml')) {
-                  str = encodeURIComponent(
-                    String.fromCharCode(...uint8)
-                  )
-                } else {
-                  str = Buffer.from(uint8).toString('base64')
-                  type += ';base64'
-                }
-              }
-              str = `data:${type},${str}`
-              console.info({ str })
-              setImage(str)
+              const blob = new Blob([result], { type })
+              setImage(URL.createObjectURL(blob))
             }
           }
         )
         reader.readAsArrayBuffer(file)
-        // reader.readAsText(file, 'UTF-8')
-        // setImage(URL.createObjectURL(file))
       }
     }, [])
 

@@ -52,11 +52,9 @@ const Home: NextPage = () => {
 
   const load = useCallback(async () => {
     let [device] = await getStreamDecks()
-    console.info({ d1: device })
     if(!device) {
       [device] = await requestStreamDecks()
     }
-    console.info({ d2: device })
     if(!device) {
       console.error('Couldn’t get a Stream Deck')
     } else {
@@ -64,7 +62,6 @@ const Home: NextPage = () => {
       setRows(device.KEY_ROWS)
       setCols(device.KEY_COLUMNS)
     }
-    console.log({ device })
   }, [])
 
   return (
