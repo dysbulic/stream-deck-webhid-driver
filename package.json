@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gh:publish": "next build && next export && gh-pages -d out/ -m 'Deployed again!'"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.1.2",
@@ -15,9 +16,11 @@
     "@emotion/styled": "^11",
     "emoji-picker-react": "^3.5.1",
     "framer-motion": "^6",
+    "gh-pages": "^5.0.0",
     "next": "12.1.6",
     "react": "18.1.0",
-    "react-dom": "18.1.0"
+    "react-dom": "18.1.0",
+    "use-animation-frame": "^0.1.4"
   },
   "devDependencies": {
     "@types/node": "17.0.38",

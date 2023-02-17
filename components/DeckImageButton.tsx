@@ -5,12 +5,12 @@ import type { Maybe } from "../types"
 
 export const TIMEOUT = 50
 
-export const DeckButton: React.FC<
+export const DeckImageButton: React.FC<
   ButtonProps & { deck: Maybe<StreamDeckWeb>, index: number }
 > = (
   ({ deck, index, ...props }) => {
     const [image, setImage] = useState<Maybe<string>>(null)
-    const [fill, setFill] = useState('transparent')
+    const [fill, setFill] = useState('#000000')
     const [size, setSize] = useState<Maybe<number>>(null)
     const [ctx, setCtx] = (
       useState<Maybe<CanvasRenderingContext2D>>(null)
@@ -31,7 +31,6 @@ export const DeckButton: React.FC<
       }
     }, [deck])
 
-    const running = useRef(false)
     const redraw = useCallback(async () => {
       if(!deck || !ctx || !size) return
 
@@ -56,29 +55,28 @@ export const DeckButton: React.FC<
           x = (size - width) / 2
         }
         ctx.drawImage(obj, x, y, width, height)
-      }
 
-      const id = ctx.getImageData(0, 0, size, size)
-      await deck.fillKeyBuffer(
-        index, Buffer.from(id.data), { format: 'rgba' }
-      )
+        const id = ctx.getImageData(0, 0, size, size)
+        await deck.fillKeyBuffer(
+          index, Buffer.from(id.data), { format: 'rgba' }
+        )
+      }
 
       setLoops((l) => l + 1)
     }, [deck, ctx, size, fill, index, image])
 
+    const frame = useRef<Maybe<number>>(null)
     useEffect(() => {
-      window.requestAnimationFrame(redraw)
+      frame.current = window.requestAnimationFrame(redraw)
     }, [loops])
 
-    const timeout = useRef<Maybe<number>>(null)
     useEffect(() => {
-      if(timeout.current) {
+      if(frame.current) {
         // window.cancelAnimationFrame(frame.current)
-        window.clearTimeout(timeout.current)
+        window.cancelAnimationFrame(frame.current)
       }
       redraw()
     }, [redraw, fill, image])
-
 
     const configure = useCallback((evt: FormEvent) => {
       evt.preventDefault()
@@ -109,8 +107,9 @@ export const DeckButton: React.FC<
     const changeFill = useCallback(
       ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
         setFill(value)
+        redraw()
       },
-      [ ],
+      [redraw],
     )
 
     const click = useCallback(
@@ -123,7 +122,7 @@ export const DeckButton: React.FC<
           }
         }
       },
-      []
+      [],
     )
 
     return (
@@ -157,7 +156,6 @@ export const DeckButton: React.FC<
             {image && (
               <ChakraImage
                 alt={`Button ${index + 1}`}
-                w="100%" h="100%"
                 src={image}
                 pointerEvents="none"
               />
