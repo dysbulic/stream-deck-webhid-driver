@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gh:publish": "next build && next export && gh-pages -d out/ -m 'Deployed again!'"
+    "gh:publish": "next build && next export && gh-pages -d out/ -m 'Deployed again!' --dotfiles"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.1.2",
